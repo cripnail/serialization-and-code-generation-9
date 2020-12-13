@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'user.dart';
-import 'package:dio/dio.dart';
 import 'package:json_serializable/json_serializable.dart';
 import 'package:build_runner/build_runner.dart';
 
@@ -9,7 +10,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -36,55 +37,53 @@ class _MyHomePageState extends State<MyHomePage> {
   bool hasError = false;
   List<User> users;
   String errorMessage;
-  Dio _dio = Dio();
 
   @override
   void initState() {
     super.initState();
-    //getDataHttp();
-    getDataDio();
+    getDataHttp();
   }
 
-  getDataDio() async {
+  getDataHttp() async {
     setState(() {
       isLoading = true;
     });
     try {
-      final response = await _dio
-          .get('https://run.mocky.io/v3/d22334ec-ebae-45e2-8ae3-9c8dfa0d4333');
-      var data = response.data;
+      final response = await http
+          .get('https://run.mocky.io/v3/af5ffb01-5cc0-4b87-95b5-47b0fcce1c96');
+      var data = json.decode(response.body);
       users = data.map<User>((user) => User.fromJson(user)).toList();
-    } on DioError catch (e) {
+    } catch (e) {
       setState(() {
-        errorMessage = e.response.data['message'];
-        hasError = true;
+        hasError = false;
         isLoading = false;
       });
     }
     setState(() {
       isLoading = false;
+      // hasError = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        body: Column(children: <Widget>[
-          if (!isLoading && hasError) Text(errorMessage),
-          if (!isLoading && hasError == false)
-            Expanded(
-              child: ListView(children: <Widget>[
-                ...users.map((user) {
-                  return ListTile(
-                    title: Text(user.email),
-                    subtitle: Text(user.name),
-                  );
-                }).toList(),
-              ]),
-            )
-        ]));
+      appBar: AppBar(
+        title: Text('Users Preload'),
+      ),
+      body:
+      isLoading
+          ? Center(child: CircularProgressIndicator())
+          : hasError
+          ? Text('Page not found')
+          : ListView(children: <Widget>[
+        ...users.map((user) {
+          return ListTile(
+            title: Text(user.email),
+            subtitle: Text(user.name),
+          );
+        }).toList(),
+      ]),
+    );
   }
 }
